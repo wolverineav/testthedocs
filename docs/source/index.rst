@@ -17,20 +17,7 @@ This comprises of the following sections:
    :name: sec-install-summary
 
    install/index
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Deploying RHOSP Undercloud Director
-   :name: sec-install-undercloud
-
    install/undercloud/index
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Deploying RHOSP Overcloud
-   :name: sec-install-overcloud
-
    install/overcloud/index
 
 
