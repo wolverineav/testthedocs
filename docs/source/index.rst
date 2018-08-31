@@ -6,9 +6,41 @@
 Welcome to BOSI's documentation!
 ================================
 
+This document explains the steps for the OpenStack installation and for
+integrating Big Cloud Fabric with Red Hat OpenStack Platform (RHOSP) 12.
+
+This comprises of the following sections:
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: RHOSP Installation Summary
+   :name: sec-install-summary
+
+   install/index
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Deploying RHOSP Undercloud Director
+   :name: sec-install-undercloud
+
+   install/undercloud/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Deploying RHOSP Overcloud
+   :name: sec-install-overcloud
+
+   install/overcloud/index
+
+
+# TODO add these sections as well:
+
+• BCF RHOSP Deployment Debugging Cheat-Sheet
+• Changing BCF RHOSP Settings to Deployed Overcloud
+• BCF RHOSP Deployment With SR-IOV for Virtual Networking
+• Upgrading BCF Switch Light Virtual and BCF RHOSP Plugin
+• Collecting Support Logs in RHOSP Setup
 
 
 
