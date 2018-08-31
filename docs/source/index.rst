@@ -13,7 +13,7 @@ This comprises of the following sections:
 
 .. toctree::
    :maxdepth: 1
-   :caption: RHOSP Installation Summary
+   :caption: Getting Started
    :name: sec-install-summary
 
    install/index
