@@ -19,5 +19,5 @@ used during testing by Big Switch Networks. It provides a good reference point
 when deploying a joint solution. But we recommend referring to the Red Hat
 documentation for an in-depth description of all available deployment options.
 
-The RHOSP deployment guide for RHOSP 12 is available at
-https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/12/html/director_installation_and_usage
+The RHOSP deployment guide for RHOSP 13 is available at
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage

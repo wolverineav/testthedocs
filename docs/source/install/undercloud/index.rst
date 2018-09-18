@@ -55,17 +55,6 @@ For example, if the host name is rhel-dell-71, use the following settings:
 
     127.0.0.1 rhel-dell-71 localhost localhost.localdomain localhost4 localhost4.localdomain4
 
-5. Enable IP forwarding
-***********************
-
-Enable IP forwarding on the Director host by completing this step:
-
-::
-
-    vi /etc/sysctl.conf
-    net.ipv4.ip_forward = 1
-    sudo sysctl -p /etc/sysctl.conf
-
 6. Create directories for images and templates
 **********************************************
 
@@ -92,7 +81,7 @@ channels as shown below.
     sudo subscription-manager list --available --all
     sudo subscription-manager attach --pool=<pool id> ----- select a pool with openstack
     sudo subscription-manager repos --disable=*
-    sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-7-server-openstack-12-rpms
+    sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-13-rpms
 
 8. Update packages
 ******************
@@ -211,7 +200,7 @@ Install and copy the images to the stack user home on the directory host
     sudo yum install rhosp-director-images rhosp-director-images-ipa
     # Extract the images
     cd ~/images
-    for i in /usr/share/rhosp-director-images/overcloud-full-latest-12.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-12.0.tar; do tar -xvf $i; done
+    for i in /usr/share/rhosp-director-images/overcloud-full-latest-13.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-13.0.tar; do tar -xvf $i; done
 
 16. Configure Overcloud container images
 ****************************************
@@ -219,83 +208,89 @@ A containerized Overcloud requires access to a registry with the required
 container images.
 
 This process is outlined in the following document -
-https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/12/html-single/director_installation_and_usage/#Configuring-Registry_Details
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/configuring-a-container-image-source
 
 The following example uses the “Local Registry” type to create a container registry.
 
-16.1. Discover the tag for the latest images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Upstream docker containers are pulled from `registry.access.redhat.com` and Big Switch Networks specific containers are pulled from `registry.connect.redhat.com`.
+Login to redhat portal is required before pulling Big Switch Networks specific containers. All the steps are detailed below.
+
+16.1. Create a template to upload the images to the local registry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-    source stackrc
-    sudo openstack overcloud container image tag discover \
-    --image registry.access.redhat.com/rhosp12/openstack-base:latest \
-    --tag-from-label version-release
-    # The result from this command is used below for the value of <TAG>.
-    <TAG> == 12.0-20180124.1 # << Sample Output
-
-16.2. Create a template to pull the images to the local registry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-    openstack overcloud container image prepare \
-    --namespace=registry.access.redhat.com/rhosp12 \
-    --prefix=openstack- \
-    --tag=<TAG> \
-    --output-images-file /home/stack/local_registry_images.yaml
-.. note:: Note: For more information about “openstack overcloud container
-          image prepare” command refer to the following:
-          https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/12/html-single/director_installation_and_usage/#Configuring-Preparing_the_Container_Images_File
-
-16.3. Pull container images to local regsitry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This creates a file called local_registry_images.yaml with your container image
- information in the home directory. Pull the images using the
- local_registry_images.yaml file:
-::
-
-    sudo openstack overcloud container image upload \
-        --config-file /home/stack/local_registry_images.yaml \
-        --verbose
-
-.. note:: Note: Pulling the required images might take some time depending on
-          the speed of your network and your undercloud disk.
-
-16.4. Find the namespace of the local images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The namespace uses the following pattern:
-
-::
-
-    <REGISTRY IP ADDRESS>:8787/rhosp12
-
-Use the IP address of your undercloud, which you previously set with the
-local_ip parameter in your undercloud.conf file. Alternatively, you can also
-obtain the full namespace with the following command:
-
-::
-
-    (undercloud) $ docker images | grep -v redhat.com | grep -o '^.*rhosp12' | sort -u
-
-16.5. Create a template for using the images in our local registry on the undercloud
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For example:
-
-::
-
+    (undercloud) $ source stackrc
     (undercloud) $ openstack overcloud container image prepare \
-        --namespace=192.168.24.1:8787/rhosp12 --prefix=openstack- \
-        --tag=<TAG> \
-        --output-env-file=/home/stack/templates/overcloud_images.yaml
+    --namespace=registry.access.redhat.com/rhosp13 \
+    --push-destination=192.168.24.1:8787 \
+    --prefix=openstack- \
+    --tag-from-label {version}-{release} \
+    --output-env-file=/home/stack/templates/overcloud_images.yaml \
+    --output-images-file /home/stack/local_registry_images.yaml
 
-This creates an overcloud_images.yaml environment file, which contains image
-locations on the Undercloud. Include this file with the overcloud deployment
-command.
+16.2. This creates two files, check that they exist
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The previous step creates two files:
+
+ - `local_registry_images.yaml`, which contains container image information from the remote source. Use this file to pull the images from the Red Hat Container Registry (registry.access.redhat.com) to the undercloud.
+ - `overcloud_images.yaml`, which contains the eventual image locations on the undercloud. You include this file with your deployment.
+
+Check that both files exist.
+
+16.3. Pull the container images
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Copy `local_registry_image_bigswitch.yaml` from the `yamls` directory of the extracted tarball of Big Switch Networks plugin.
+
+::
+
+    (undercloud) $ cp /home/stack/images/<BCF Plugin tarball>/yamls/local_registry_images_bigswitch.yaml /home/stack
+    (undercloud) $ cat local_registry_images_bigswitch.yaml
+    container_images:
+    - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
+      push_destination: <REGISTRY_IP>:8787
+
+    # REGISTRY_IP == undercloud ctlplane IP == 192.168.24.1
+
+Login to the Red Hat portal before pulling the container images:
+
+::
+
+   (undercloud) $ sudo docker login registry.connect.redhat.com
+
+Upload images to local registry:
+
+::
+
+    (undercloud) $ sudo openstack overcloud container image upload \
+    --config-file /home/stack/local_registry_images.yaml \
+    --config-file /home/stack/local_registry_images_bigswitch.yaml \
+    --verbose
+
+16.4. The images are now stored on the undercloud’s docker-distribution registry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To view the list of images on the undercloud’s docker-distribution registry using the following command:
+
+::
+
+    (undercloud) $  curl http://192.168.24.1:8787/v2/_catalog | jq .repositories[]
+
+To view a list of tags for a specific image, use the skopeo command:
+
+::
+
+    (undercloud) $ skopeo inspect --tls-verify=false docker://192.168.24.1:8787/rhosp13/openstack-keystone | jq .RepoTags[]
+
+To verify a tagged image, use the skopeo command:
+
+::
+
+    (undercloud) $ skopeo inspect --tls-verify=false docker://192.168.24.1:8787/rhosp13/openstack-keystone:13.0-44
+
+The registry configuration is ready.
 
 17. Download BCF plugin tarball
 *******************************
@@ -332,17 +327,52 @@ Overcloud compute nodes.
 
     virt-customize -a overcloud-full.qcow2 --root-password password:<password>
 
-20. Patch overcloud image with BCF plugins
-******************************************
-Patch all the extracted RPM files from the Big Switch RHOSP plugin tar files
-to overcloud-full.qcow2 by running following script from extracted file.
+20. Patch overcloud image with BCF LLDP script
+**********************************************
+
+Download the neutron-bsn-lldp from bigtop:
 
 ::
 
-    source /home/stack/stackrc
     cd /home/stack/images
-    chmod +x customize.sh
+    curl -O http://bigtop.eng.bigswitch.com/~bsn/neutron-bsn-lldp/centos7-x86_64/origin/master/0.0.1/neutron-bsn-lldp-0.0.1-1.el7.centos.noarch.rpm ./
+
+Create startup.sh script:
+
+::
+
+    # ensure startup.sh has the following:
+    (undercloud) $ vi startup.sh
+    yum remove -y openstack-neutron-bigswitch-agent
+    yum remove -y openstack-neutron-bigswitch-lldp
+    yum remove -y python-networking-bigswitch
+
+    yum remove -y neutron-bsn-lldp
+    rpm -ivhU --force /root/neutron-bsn-lldp-0.0.1-1.el7.centos.noarch.rpm
+    systemctl enable neutron-bsn-lldp.service
+    systemctl restart neutron-bsn-lldp.service
+
+Create customize.sh script:
+
+::
+
+    # ensure customize.sh has the following:
+    (undercloud) $ vi customize.sh
+    export LIBGUESTFS_BACKEND=direct
+
+    image_dir="/home/stack/images"
+
+    virt-customize -a ${image_dir}/overcloud-full.qcow2 --upload neutron-bsn-lldp-0.0.1-1.el7.centos.noarch.rpm:/root/
+    virt-customize -a ${image_dir}/overcloud-full.qcow2 --firstboot startup.sh
+
+Make both customize.sh and startup.sh as executables and run customize.sh:
+
+::
+
+    chmod +x startup.sh customize.sh
     ./customize.sh
+
+
 
 21. Upload the customized Overcloud image
 *****************************************
@@ -353,21 +383,7 @@ Run the following command to import these images into the Director:
     openstack image delete overcloud-full # Only needed If you have uploaded image before.
     openstack overcloud image upload
 
-22. Customize container images
-******************************
-
-Customize Horizon and Nova compute container images to include Big Switch packages:
-
-::
-
-    cd /home/stack/images
-    ./customize_horizon_container.sh
-    ./customize_nova_compute_container.sh
-
-.. note:: The above step assumes the installation is using the Local Registry
-          type as outlined in `16. Configure Overcloud container images`_.
-
-23. Define the nameserver for the environment
+22. Define the nameserver for the environment
 *********************************************
 
 Overcloud nodes require a nameserver so that they can resolve hostnames through
