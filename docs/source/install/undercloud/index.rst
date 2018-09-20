@@ -282,7 +282,13 @@ Make both customize.sh and startup.sh as executables and run customize.sh:
     chmod +x startup.sh customize.sh
     ./customize.sh
 
+19.1 Include IVS in customize.sh and startup.sh [PV ONLY]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+In the current step, uncomment the lines from `customize.sh` and `startup.sh` regarding IVS, when doing a P+V installation.
+This step  is not required for P-only deployments.
+
+Insert the appropriate version number for IVS based on the package that you received.
 
 20. Upload the customized Overcloud image
 *****************************************
@@ -312,7 +318,7 @@ Login to redhat portal is required before pulling Big Switch Networks specific c
 ::
 
     (undercloud) $ source stackrc
-    (undercloud) $ openstack overcloud container image prepare \
+    (undercloud) $ sudo openstack overcloud container image prepare \
     --namespace=registry.access.redhat.com/rhosp13 \
     --push-destination=192.168.24.1:8787 \
     --prefix=openstack- \
@@ -369,6 +375,36 @@ Upload images to local registry:
     --config-file /home/stack/local_registry_images.yaml \
     --config-file /home/stack/local_registry_images_bigswitch.yaml \
     --verbose
+
+21.3.1 Include IVS and Neutron BSN Agent [PV ONLY]
+__________________________________________________
+
+Ensure that you're using the Big Switch nova-compute container when deploying in P+V mode.
+
+The `local_registry_images_bigswitch.yaml` looks as follows:
+
+::
+
+    container_images:
+    - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
+      push_destination: 192.168.25.1:8787
+    - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-1
+      push_destination: 192.168.25.1:8787
+
+The `templates/overcloud_images_bigswitch.yaml` looks as follows:
+
+::
+
+    parameter_defaults:
+      DockerNeutronApiImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
+      DockerNeutronConfigImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
+      DockerNeutronBigswitchAgentImage: 192.168.25.1:8787/rhosp13/openstack-neutron-server-bigswitch:13.0-1
+      DockerNovaComputeImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-1
+      DockerNovaLibvirtConfigImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-compute-bigswitch:13.0-1
+
+.. note:: Make sure you run `sudo oopenstack overcloud container image upload`
+          after you edit the `local_registry_images_bigswitch.yaml` file and
+          add nova-compute-bigswitch container.
 
 21.4. The images are now stored on the undercloud’s docker-distribution registry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
