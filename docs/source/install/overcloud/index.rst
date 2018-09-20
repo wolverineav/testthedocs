@@ -38,7 +38,7 @@ grouping. So add `/etc/os-net-config` as a mount volume for neutron-api service.
 
 ::
 
-    echo "$(awk '{print} /^                      - \/var\/lib\/config-data\/puppet-generated\/neutron\/\:\/var\/lib\/kolla\/config_files\/src:ro/ && !n {print "                      - \/etc\/os-net-config\:\/etc\/os-net-config\:ro"; n++}' /home/stack/overcloud-plan/docker/services/neutron-api.yaml)" > /home/stack/overcloud-plan/docker/services/neutron-api.yaml
+    sed -i '0,/                      - \/var\/lib\/config-data\/puppet-generated\/neutron\/\:\/var\/lib\/kolla\/config_files\/src:ro/s//                      - \/var\/lib\/config-data\/puppet-generated\/neutron\/\:\/var\/lib\/kolla\/config_files\/src:ro\n                      - \/etc\/os-net-config\:\/etc\/os-net-config\:ro/' /home/stack/overcloud-plan/docker/services/neutron-api.yaml
 
 3.1 Add extra mount point in the nova-compute service container [PV ONLY]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,7 +49,7 @@ sharing the runtime, by mounting the `/usr/sbin` volume.
 
 ::
 
-    echo "$(awk '{print} /^                  - \/lib\/modules\:\/lib\/modules\:ro/ && !n {print "                  - \/usr\/sbin\:\/usr\/sbin"; n++}' /home/stack/overcloud-plan/docker/services/nova-compute.yaml)" > /home/stack/overcloud-plan/docker/services/nova-compute.yaml
+    sed -i '0,/                  - \/lib\/modules\:\/lib\/modules\:ro/s//                  - \/lib\/modules\:\/lib\/modules\:ro\n                  - \/usr\/sbin\:\/usr\/sbin/' /home/stack/overcloud-plan/docker/services/nova-compute.yaml
 
 4. Add Neutron Bigswitch Agent service to Compute role [PV ONLY]
 ################################################################
