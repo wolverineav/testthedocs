@@ -336,14 +336,14 @@ The previous step creates two files:
 
 Check that both files exist.
 
-Also make sure to copy `local_registry_bigswitch.yaml` and
-`overcloud_image_bigswitch.yaml` to the respective folders `/home/stack` and
-`/home/stack/templates`.
+.. note::  Also make sure to copy `local_registry_images_bigswitch.yaml` and
+           `overcloud_images_bigswitch.yaml` from the extracted plugin folder
+           to the respective folders `/home/stack` and `/home/stack/templates`.
 
 21.3. Pull the container images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Copy `local_registry_image_bigswitch.yaml` from the `yamls` directory of the extracted tarball of Big Switch Networks plugin.
+Copy `local_registry_images_bigswitch.yaml` from the `yamls` directory of the extracted tarball of Big Switch Networks plugin.
 
 ::
 
@@ -388,7 +388,7 @@ The `local_registry_images_bigswitch.yaml` looks as follows:
     container_images:
     - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
       push_destination: 192.168.25.1:8787
-    - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-1
+    - imagename: registry.connect.redhat.com/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-2
       push_destination: 192.168.25.1:8787
 
 The `templates/overcloud_images_bigswitch.yaml` looks as follows:
@@ -398,11 +398,11 @@ The `templates/overcloud_images_bigswitch.yaml` looks as follows:
     parameter_defaults:
       DockerNeutronApiImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
       DockerNeutronConfigImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
-      DockerNeutronBigswitchAgentImage: 192.168.25.1:8787/rhosp13/openstack-neutron-server-bigswitch:13.0-1
-      DockerNovaComputeImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-1
-      DockerNovaLibvirtConfigImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-compute-bigswitch:13.0-1
+      DockerNeutronBigswitchAgentImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-neutron-server-bigswitch:13.0-1
+      DockerNovaComputeImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-2
+      DockerNovaLibvirtConfigImage: 192.168.25.1:8787/bigswitch/rhosp13-openstack-nova-compute-bigswitch:13.0-2
 
-.. note:: Make sure you run `sudo oopenstack overcloud container image upload`
+.. note:: Make sure you run `sudo openstack overcloud container image upload`
           after you edit the `local_registry_images_bigswitch.yaml` file and
           add nova-compute-bigswitch container.
 
