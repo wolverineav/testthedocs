@@ -444,3 +444,19 @@ DNS. The nameserver is defined in the Undercloud neutron subnet.
 
 This completes the Undercloud Director node installation and configuration.
 Now it is ready to deploy the Overcloud (OpenStack cluster).
+
+23. Install Big Switch's Neutron Client for CLI
+***********************************************
+
+Install `python-bsn-neutronclient` package on the undercloud to enable Neutron
+CLI commands specific to Big Switch Network's plugin. The package is included
+in the tarball package. Exceute the following to ensure a clean install:
+
+::
+
+    sudo rpm -e python-bsn-neutronclient
+    cd /home/stack/images/<RHOSP-PLUGINS-TARBALL-EXTRACT>
+    sudo rpm -ivhU python-bsn-neutronclient*.noarch.rpm
+
+You can now execute BSN plugin commands such as `force-bcf-sync` and
+`bcf-sync-status` from the undercloud after doing a `source overcloudrc`.
